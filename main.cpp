@@ -13,6 +13,12 @@ using namespace std;
 
 // Global variables
 double k = sqrt(2);
+bool flag = false;
+void print(int n)
+{
+    if (flag)
+        cout << n << endl;
+}
 enum eState
 {
     ePlayer1 = 7,
@@ -183,7 +189,6 @@ public:
         // If no one won and the board is full, set result to "Draw"
         if (result == eIncomplete && bigBoardCount[move[0]][move[1]] == 9)
             result = eDraw;
-
         // If the board completed...
         if (result != eIncomplete)
         {
@@ -196,13 +201,11 @@ public:
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
                     fullBoard[move[0]][move[1]][i][j] = result;
-
             // Check for the final result
             finalResult = evaluate3x3Board(bigBoardState, {move[0], move[1]});
             // If no one won and the board is full, set result to "Draw"
             if (finalResult == eIncomplete && finalCount == 9)
                 finalResult = eDraw;
-
             // If game over...
             if (finalResult != eIncomplete)
             {
@@ -215,7 +218,6 @@ public:
                     for (int i = 0; i < 3; i++)
                         for (int j = 0; j < 3; j++)
                             count = count + bigBoardState[i][j] - 8;
-
                     // Update final result
                     if (count == 0)
                         finalResult = eDraw;
@@ -329,7 +331,6 @@ public:
     // ##############################################
     bool bRootNode;
     Node *pParent;
-    int index;
     int score = 0;
     int visits = 0;
     std::array<int, 4> move;
@@ -345,11 +346,10 @@ public:
         bRootNode = true;
     }
     // Non-root constructor
-    Node(Node *pP, int i, std::array<int, 4> m)
+    Node(Node *pP, std::array<int, 4> m)
     {
         pParent = pP;
         bRootNode = false;
-        index = i;
         move = m;
     }
 
@@ -377,7 +377,7 @@ public:
             if (pChildren[i]->visits == 0)
                 return pChildren[i];
             double weight = getWeight(pChildren[i]->score, pChildren[i]->visits, visits);
-            if (weight > maxWeight)
+            if (weight > maxWeight || i == 0)
             {
                 maxWeight = weight;
                 bestChild = pChildren[i];
@@ -414,8 +414,11 @@ public:
             // If not leaf node, pick a child with the highest weight and iterate
             if (node->pChildren.size() != 0)
             {
+                flag = false;
                 auto bestChild = node->getBestChild();
+                auto b = bestChild->move;
                 makeMove(bestChild->move);
+                flag = false;
                 iterate(bestChild);
                 // If leaf node...
             }
@@ -434,7 +437,7 @@ public:
                     // Update children nodes
                     for (size_t i = 0; i < playableMoves.size(); i++)
                     {
-                        node->pChildren.push_back(new Node(node, i, playableMoves[i]));
+                        node->pChildren.push_back(new Node(node, playableMoves[i]));
                     }
                     // Rollout on the first child
                     makeMove(playableMoves[0]);
@@ -683,6 +686,7 @@ void codinGame()
 int main()
 {
     srand(time(NULL));
-    selfPlayTimed();
+    selfPlayTimed(300, false);
+    // selfPlay(300, false);
     return 0;
 }
